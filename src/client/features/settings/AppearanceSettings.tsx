@@ -1,11 +1,19 @@
+import { useRef, useState } from 'react'
+import { APP_DISPLAY_NAME_MAX_LENGTH } from '@shared/branding'
 import type { AccentName, AppLocale, BackgroundName, ProseFont, ProseWidth, ThemePref, UiDensity } from '@shared/types'
-import { Check, Monitor, Moon, Sun } from 'lucide-react'
+import { Check, Monitor, Moon, RotateCcw, Sun, Upload } from 'lucide-react'
 import { cn } from '../../lib/cn'
-import { Segmented, SettingRow, Slider } from '../../components/form'
+import { Input, Segmented, SettingRow, Slider } from '../../components/form'
+import { Button, Logo } from '../../components/primitives'
 import { Tooltip } from '../../components/overlay'
 import { useSession } from '../../store/session'
 import { switchThemeWithTransition } from '../../store/ui'
 import { t, type MessageKey } from '../../lib/i18n'
+import {
+  AppIconUploadError,
+  defaultAppName,
+  prepareAppIconUpload,
+} from '../../lib/branding'
 
 const ACCENT_MESSAGE_KEYS: Record<AccentName, MessageKey> = {
   cinnabar: 'settings.accent.cinnabar',
@@ -28,6 +36,13 @@ export function AppearanceSettings({
 
   return (
     <div>
+      <section>
+        <h3 className="mb-1 text-[11px] font-semibold tracking-[0.06em] text-[var(--text-quaternary)]">
+          {t("settings.branding")}
+        </h3>
+        <BrandingSettings />
+      </section>
+
       <section>
         <SettingRow title={t("settings.interface_language")}>
           <Segmented<AppLocale>
@@ -183,6 +198,108 @@ export function AppearanceSettings({
       <PreviewSample />
     </div>
   )
+}
+
+
+function BrandingSettings() {
+  const settings = useSession((s) => s.settings)
+  const site = useSession((s) => s.site)
+  const update = useSession((s) => s.updateSettings)
+  const appearance = settings.appearance
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [processing, setProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const fallbackName = defaultAppName(site)
+
+  const onNameChange = (value: string) => {
+    void update({ appearance: { appName: value.slice(0, APP_DISPLAY_NAME_MAX_LENGTH) } })
+  }
+
+  const chooseFile = async (file: File | undefined) => {
+    if (!file || processing) return
+    setProcessing(true)
+    setError(null)
+    try {
+      const dataUrl = await prepareAppIconUpload(file)
+      void update({ appearance: { appIcon: dataUrl } })
+    } catch (caught) {
+      setError(appIconUploadError(caught))
+    } finally {
+      setProcessing(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  return (
+    <>
+      <SettingRow title={t("settings.display_app_name")} description={t("settings.display_app_name_hint")}>
+        <Input
+          className="w-[220px]"
+          value={appearance.appName}
+          placeholder={fallbackName}
+          maxLength={APP_DISPLAY_NAME_MAX_LENGTH}
+          onChange={(event) => onNameChange(event.target.value)}
+          aria-label={t("settings.display_app_name")}
+        />
+      </SettingRow>
+
+      <SettingRow title={t("settings.app_icon")} description={t("settings.app_icon_hint")}>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-10 items-center justify-center overflow-hidden rounded-[12px] border border-[var(--border-subtle)] bg-[var(--bg-base)] text-[var(--accent)]">
+              <Logo size={22} src={appearance.appIcon || null} />
+            </span>
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg"
+              className="hidden"
+              onChange={(event) => void chooseFile(event.target.files?.[0])}
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Upload size={13} />}
+              loading={processing}
+              onClick={() => inputRef.current?.click()}
+            >
+              {t("settings.upload_app_icon")}
+            </Button>
+            {appearance.appIcon ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={<RotateCcw size={13} />}
+                disabled={processing}
+                onClick={() => void update({ appearance: { appIcon: '' } })}
+              >
+                {t("settings.reset_app_icon")}
+              </Button>
+            ) : null}
+          </div>
+          {error ? <p className="max-w-[280px] text-right text-[11px] text-[var(--danger)]">{error}</p> : null}
+        </div>
+      </SettingRow>
+    </>
+  )
+}
+
+function appIconUploadError(caught: unknown): string {
+  if (caught instanceof AppIconUploadError) {
+    switch (caught.code) {
+      case 'unsupported':
+        return t('settings.app_icon_unsupported')
+      case 'too_large':
+        return t('settings.app_icon_too_large')
+      case 'unsafe_svg':
+        return t('settings.app_icon_unsafe_svg')
+      case 'decode_failed':
+        return t('settings.app_icon_decode_failed')
+      case 'encode_failed':
+        return t('settings.app_icon_encode_failed')
+    }
+  }
+  return t('settings.action_failed_try_again')
 }
 
 

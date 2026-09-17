@@ -46,7 +46,40 @@
                   ? 'zh-CN'
                   : 'en-US'
           root.lang = locale
-          document.title = 'Inkstone'
+          var brandName = 'Inkstone'
+          var brandIcon = null
+          try {
+            var brandRaw = localStorage.getItem('inkstone.branding')
+            if (!brandRaw) brandRaw = localStorage.getItem('inkstone.demo.branding')
+            if (brandRaw) {
+              var brand = JSON.parse(brandRaw)
+              if (brand && typeof brand.appName === 'string' && brand.appName.trim()) {
+                brandName = String(brand.appName).trim().slice(0, 64)
+              }
+              if (brand && typeof brand.appIcon === 'string' && brand.appIcon.indexOf('data:image/') === 0) {
+                brandIcon = brand.appIcon
+              }
+            }
+          } catch (brandErr) {}
+          document.title = brandName
+          var appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]')
+          if (appleTitle) appleTitle.content = brandName
+          if (brandIcon) {
+            var favicon = document.querySelector("link[rel='icon']")
+            if (favicon) favicon.setAttribute('href', brandIcon)
+            var appleIcon = document.querySelector("link[rel='apple-touch-icon']")
+            if (appleIcon) appleIcon.setAttribute('href', brandIcon)
+            var bootSvg = document.querySelector('#boot svg')
+            if (bootSvg) {
+              var bootImg = document.createElement('img')
+              bootImg.src = brandIcon
+              bootImg.alt = ''
+              bootImg.width = 34
+              bootImg.height = 34
+              bootImg.style.borderRadius = '22%'
+              bootSvg.replaceWith(bootImg)
+            }
+          }
           var description = document.querySelector('meta[name="description"]')
           if (description) {
             description.content = 'A private, self-hosted Markdown notebook built on Cloudflare.'

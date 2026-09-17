@@ -2,7 +2,7 @@
 import { useSyncExternalStore } from 'react';
 import type { AppLocale } from '@shared/types';
 import type { MessageKey } from '@shared/locales/en-US';
-import { LOCALE_STORAGE_KEY } from './runtime';
+import { BRANDING_STORAGE_KEY, LOCALE_STORAGE_KEY } from './runtime';
 type Params = Record<string, string | number | boolean | null | undefined>;
 const STORAGE_KEY = LOCALE_STORAGE_KEY;
 const listeners = new Set<() => void>();
@@ -161,12 +161,27 @@ function detectInitialLocale(): AppLocale {
 }
 function applyLocaleToDom(): void {
     document.documentElement.lang = locale;
-    document.title = t('app.document_title');
+    document.title = resolveDocumentTitle();
     const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (description)
         description.content = t('app.meta_description');
     const bootLabel = document.querySelector<HTMLElement>('#boot [data-boot-label]');
     if (bootLabel)
         bootLabel.textContent = t('app.boot_label');
+}
+function resolveDocumentTitle(): string {
+    try {
+        const raw = localStorage.getItem(BRANDING_STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw) as { appName?: unknown };
+            if (typeof parsed?.appName === 'string') {
+                const name = parsed.appName.trim();
+                if (name)
+                    return name.slice(0, 64);
+            }
+        }
+    }
+    catch { }
+    return t('app.document_title');
 }
 applyLocaleToDom();

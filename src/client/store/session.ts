@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { DEFAULT_SETTINGS, mergeSettings, mergeSettingsPatch } from '@shared/constants'
 import type { PublicUser, SessionInfo, SiteInfo, TotpLoginChallenge, UserSettings } from '@shared/types'
 import { api, ApiError } from '../lib/api'
+import { syncBrandingFromSettings } from '../lib/branding'
 import { getLocale, setLocale, t } from '../lib/i18n'
 import { localDb } from '../lib/db'
 import { applyThemeToDom, useUi } from './ui'
@@ -438,6 +439,7 @@ export function syncAppearanceToDom(settings: UserSettings): void {
     fontScale: appearance.proseSize,
   })
   if (useUi.getState().density !== appearance.density) useUi.setState({ density: appearance.density })
+  syncBrandingFromSettings(settings, useSession.getState().site)
 }
 
 export function watchSystemTheme(): () => void {

@@ -1,3 +1,4 @@
+import { normalizeAppDisplayName, normalizeAppIcon } from './branding'
 import type { AccentName, UserSettings, ViewKind } from './types'
 import { version as packageVersion } from '../../package.json'
 
@@ -68,6 +69,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
     proseSize: 16,
     proseWidth: 'normal',
     proseLineHeight: 1.65,
+    appName: '',
+    appIcon: '',
   },
   editor: {
     fontSize: 15,
@@ -165,6 +168,11 @@ export function mergeSettings(partial: unknown): UserSettings {
     2.2,
     base.appearance.proseLineHeight,
   )
+  base.appearance.appName = normalizeAppDisplayName(
+    appearance.appName,
+    base.appearance.appName,
+  )
+  base.appearance.appIcon = normalizeAppIcon(appearance.appIcon, base.appearance.appIcon)
 
   base.editor.fontSize = integerInRange(editor.fontSize, 12, 22, base.editor.fontSize)
   base.editor.fontFamily = enumValue(editor.fontFamily, EDITOR_FONTS, base.editor.fontFamily)

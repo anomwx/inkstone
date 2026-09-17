@@ -101,6 +101,10 @@ export interface AppearanceSettings {
   proseSize: number
   proseWidth: ProseWidth
   proseLineHeight: number
+  /** Custom product name shown in the shell; empty uses the default app name. */
+  appName: string
+  /** Custom app icon as a data URL (PNG/JPEG/WebP/SVG); empty uses the built-in logo. */
+  appIcon: string
 }
 
 export interface EditorSettings {

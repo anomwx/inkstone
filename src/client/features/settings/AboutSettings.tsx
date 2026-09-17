@@ -9,9 +9,11 @@ import { useSession } from '../../store/session';
 import { usePwa } from '../../store/pwa';
 import { useUpdate } from '../../store/update';
 import { t } from "../../lib/i18n";
+import { useAppBranding } from "../../lib/useAppBranding";
 export function AboutSettings() {
     const user = useSession((s) => s.user);
     const site = useSession((s) => s.site);
+    const branding = useAppBranding();
     const logout = useSession((s) => s.logout);
     const updateStatus = useUpdate((s) => s.status);
     const updateInfo = useUpdate((s) => s.info);
@@ -139,10 +141,10 @@ export function AboutSettings() {
       <section className="flex items-center justify-between rounded-[var(--r-lg)] border border-[var(--border-subtle)] bg-[var(--bg-base)] p-4">
         <div className="flex items-center gap-2.5">
           <span className="text-[var(--accent)]">
-            <Logo size={20}/>
+            <Logo size={20} src={branding.icon}/>
           </span>
           <div>
-            <div className="text-[13px] font-semibold">{t("common.product_name")}</div>
+            <div className="text-[13px] font-semibold">{branding.name}</div>
             <div className="text-[11.5px] text-[var(--text-quaternary)]">{t("settings.version")} {site?.version ?? '—'}</div>
           </div>
         </div>

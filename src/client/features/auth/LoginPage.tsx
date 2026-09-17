@@ -7,6 +7,7 @@ import { Input } from '../../components/form'
 import { cn } from '../../lib/cn'
 import { ApiError } from '../../lib/api'
 import { t } from '../../lib/i18n'
+import { useAppBranding } from '../../lib/useAppBranding'
 import { initialLoginCredentials } from '../../lib/runtime'
 import { useSession } from '../../store/session'
 
@@ -18,6 +19,7 @@ export function LoginPage() {
   const totpLogin = useSession((state) => state.totpLogin)
   const passwordRegister = useSession((state) => state.passwordRegister)
   const firstRun = Boolean(site && !site.initialized)
+  const branding = useAppBranding()
   const [mode, setMode] = useState<'login' | 'register'>(firstRun ? 'register' : 'login')
   const [username, setUsername] = useState(initialCredentials.username)
   const [password, setPassword] = useState(initialCredentials.password)
@@ -100,13 +102,13 @@ export function LoginPage() {
               'text-[var(--accent)] shadow-[var(--shadow-pop)]',
             )}
           >
-            <Logo size={27} />
+            <Logo size={27} src={branding.icon} />
           </div>
           <h1
             className="text-[30px] font-semibold tracking-[0.01em] text-[var(--text-primary)]"
             style={{ fontFamily: 'var(--font-serif)' }}
           >
-            {t("common.product_name")}
+            {branding.name}
           </h1>
           <p className="mt-2.5 text-[13px] leading-relaxed text-[var(--text-tertiary)]">
             {challenge
