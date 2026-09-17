@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { DEFAULT_SETTINGS, mergeSettings, mergeSettingsPatch } from '@shared/constants'
 import type { PublicUser, SessionInfo, SiteInfo, TotpLoginChallenge, UserSettings } from '@shared/types'
 import { api, ApiError } from '../lib/api'
-import { syncBrandingFromSettings } from '../lib/branding'
+import { persistLocalBranding, syncBrandingFromSettings } from '../lib/branding'
 import { getLocale, setLocale, t } from '../lib/i18n'
 import { localDb } from '../lib/db'
 import { applyThemeToDom, useUi } from './ui'
@@ -229,15 +229,19 @@ export const useSession = create<SessionState>((set, get) => ({
         if (!proceed) return
       }
 
+      // Keep custom login branding across sign-out (must survive local clear + reload).
+      persistLocalBranding({
+        appName: get().settings.appearance.appName,
+        appIcon: get().settings.appearance.appIcon,
+      })
+
+      let serverLogoutError: unknown = null
       try {
         await api.logout()
       } catch (err) {
-        useUi.getState().toast({
-          title: t('session.logout_failed'),
-          description: err instanceof ApiError ? err.message : String(err),
-          tone: 'danger',
-        })
-        return
+        // Server logout can fail after worker renames / sticky cookies / transient
+        // API errors. Never leave the user stuck: clear local session anyway.
+        serverLogoutError = err
       }
 
       sessionRequestSequence++
@@ -247,6 +251,20 @@ export const useSession = create<SessionState>((set, get) => ({
       await pendingSessionCache.catch(() => {})
       await localDb.clear()
       set({ status: 'anonymous', user: null, settings: DEFAULT_SETTINGS })
+      if (serverLogoutError) {
+        const detail =
+          serverLogoutError instanceof ApiError
+            ? serverLogoutError.message
+            : String(serverLogoutError)
+        try {
+          sessionStorage.setItem(
+            'inkstone.logoutWarning',
+            t('session.logout_local_warning', { detail }),
+          )
+        } catch {
+          // sessionStorage may be unavailable; reload still signs out locally.
+        }
+      }
       location.reload()
     })()
     logoutPromise = task

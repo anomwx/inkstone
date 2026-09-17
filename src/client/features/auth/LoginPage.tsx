@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, KeyRound, Loader2, TriangleAlert } from 'lucide-react'
 import { LIMITS } from '@shared/constants'
 import type { TotpLoginChallenge } from '@shared/types'
@@ -10,6 +10,7 @@ import { t } from '../../lib/i18n'
 import { useAppBranding } from '../../lib/useAppBranding'
 import { initialLoginCredentials } from '../../lib/runtime'
 import { useSession } from '../../store/session'
+import { useUi } from '../../store/ui'
 
 export function LoginPage() {
   const initialCredentials = initialLoginCredentials()
@@ -20,6 +21,17 @@ export function LoginPage() {
   const passwordRegister = useSession((state) => state.passwordRegister)
   const firstRun = Boolean(site && !site.initialized)
   const branding = useAppBranding()
+  const toast = useUi((s) => s.toast)
+  useEffect(() => {
+    try {
+      const warning = sessionStorage.getItem('inkstone.logoutWarning')
+      if (!warning) return
+      sessionStorage.removeItem('inkstone.logoutWarning')
+      toast({ title: t('session.logout_failed'), description: warning, tone: 'warning', duration: 8000 })
+    } catch {
+      // ignore
+    }
+  }, [toast])
   const [mode, setMode] = useState<'login' | 'register'>(firstRun ? 'register' : 'login')
   const [username, setUsername] = useState(initialCredentials.username)
   const [password, setPassword] = useState(initialCredentials.password)

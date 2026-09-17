@@ -81,11 +81,27 @@ export function translateApiError(code: string, fallback: string): string {
     const key = apiCodeMessages[code];
     if (key)
         return t(key);
-    return fallback ? translateServiceMessage(fallback) : t('api.error.unknown');
+    if (!fallback)
+        return t('api.error.unknown');
+    // Translate known English service strings when possible, but never replace
+    // unrecognized API failures with the backup "storage service" catch-all —
+    // that message is misleading for auth/settings/stats errors.
+    const known = translateKnownServiceMessage(fallback);
+    return known ?? fallback;
 }
+/** Backup/WebDAV-oriented English → locale mapping. Unknown strings stay as-is unless `storageFallback`. */
 export function translateServiceMessage(message: string | null | undefined): string {
     if (!message || locale === 'en-US')
         return message ?? '';
+    const known = translateKnownServiceMessage(message);
+    if (known)
+        return known;
+    const http = /HTTP\s+\d{3}/i.exec(message)?.[0];
+    return `${t('backup.error.storage_service')}${http ? ` (${http})` : ''}`;
+}
+function translateKnownServiceMessage(message: string): string | null {
+    if (locale === 'en-US')
+        return null;
     const exactKey = englishMessageKeys.get(message);
     if (exactKey)
         return t(exactKey);
@@ -110,8 +126,7 @@ export function translateServiceMessage(message: string | null | undefined): str
     match = /^Read and write succeeded, but the test file could not be removed:\s*HTTP\s+(\d{3})$/i.exec(message);
     if (match)
         return t('backup.service.cleanup_failed', { status: match[1] });
-    const http = /HTTP\s+\d{3}/i.exec(message)?.[0];
-    return `${t('backup.error.storage_service')}${http ? ` (${http})` : ''}`;
+    return null;
 }
 export function getLocale(): AppLocale {
     return locale;
