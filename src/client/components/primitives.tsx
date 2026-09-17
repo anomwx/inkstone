@@ -4,7 +4,29 @@ import { prettyCombo } from '../lib/hotkeys'
 import { resolveAvatarSource } from '../lib/avatar'
 
 
-export function Logo({ size = 20, className }: { size?: number; className?: string }) {
+export function Logo({
+  size = 20,
+  className,
+  src,
+}: {
+  size?: number
+  className?: string
+  /** Optional custom icon (data URL or image URL). Falls back to the built-in mark. */
+  src?: string | null
+}) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        width={size}
+        height={size}
+        className={cn('ink-logo rounded-[22%]', className)}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+      />
+    )
+  }
   return (
     <svg
       viewBox="0 0 32 32"

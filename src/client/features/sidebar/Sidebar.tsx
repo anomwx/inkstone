@@ -15,6 +15,7 @@ import { FolderAppearance, FolderPicker } from '../folders/FolderPicker';
 import { TagAppearance } from '../tags/TagAppearance';
 import { createTag, deleteTag, renameTag, setTagColor } from '../tags/tagMutations';
 import { t } from "../../lib/i18n";
+import { useAppBranding } from "../../lib/useAppBranding";
 import { SearchButton } from '../shell/SearchButton';
 export function Sidebar({ collapsed = false, onCollapse, }: {
     collapsed?: boolean;
@@ -23,13 +24,14 @@ export function Sidebar({ collapsed = false, onCollapse, }: {
     const view = useUi((s) => s.view);
     const openView = useUi((s) => s.openView);
     const counts = useNavigationCounts();
+    const branding = useAppBranding();
     return (<>
         {collapsed ? <SidebarRail onExpand={onCollapse}/> : (<aside className="flex h-full min-h-0 flex-col bg-[var(--bg-sunken)]">
       <header className="flex h-11 shrink-0 items-center justify-between border-b border-[var(--border-subtle)] px-3">
         <div className="flex min-w-0 items-center gap-[9px] select-none">
-          <Logo size={24}/>
+          <Logo size={24} src={branding.icon}/>
           <span className="min-w-0 truncate font-serif text-[15.5px] font-semibold tracking-[0.02em] text-[var(--text-primary)]">
-            {t("common.product_name")}
+            {branding.name}
           </span>
         </div>
         {onCollapse && (<Tooltip label={t("sidebar.collapse_navigation")}>

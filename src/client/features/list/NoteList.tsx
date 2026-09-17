@@ -15,7 +15,8 @@ import { useUi } from '../../store/ui';
 import { createContextualNote, useNotes, useVisibleNotes } from '../../store/notes';
 import { folderPathLabel } from '../../lib/folders';
 import { FolderPicker } from '../folders/FolderPicker';
-import { t, useLocale, type MessageKey } from "../../lib/i18n";
+import { t, useLocale, type MessageKey } from "../../lib/i18n"
+import { useAppBranding } from "../../lib/useAppBranding";
 import { MobileLibraryFilters } from '../shell/MobileLibraryFilters';
 const VIEW_MESSAGE_KEYS: Record<ViewKind, MessageKey> = {
     all: 'navigation.all_notes',
@@ -35,6 +36,7 @@ const INITIAL_RENDERED_NOTES = 180;
 const RENDERED_NOTES_STEP = 240;
 export function NoteList() {
     const locale = useLocale();
+    const branding = useAppBranding();
     const breakpoint = useBreakpoint();
     const view = useUi((s) => s.view);
     const folderId = useUi((s) => s.folderId);
@@ -185,7 +187,7 @@ export function NoteList() {
     ];
     return (<section className={cn('relative flex h-full min-h-0 flex-col border-r border-[var(--border-subtle)] bg-[var(--bg-base)]', breakpoint === 'mobile' && 'mobile-note-list')}>
       <header className="shrink-0 px-3 pt-3 pb-2">
-        {breakpoint === 'mobile' && <div className="mobile-library-brand"><Logo size={22}/><span>{t('common.product_name')}</span></div>}
+        {breakpoint === 'mobile' && <div className="mobile-library-brand"><Logo size={22} src={branding.icon}/><span>{branding.name}</span></div>}
         {breakpoint !== 'mobile' && <div className="mb-2.5 flex items-center justify-between gap-2">
           <div className="min-w-0">
             <h2 className="truncate text-[14.5px] font-semibold tracking-[-0.016em] text-[var(--text-primary)]">{title}</h2>
